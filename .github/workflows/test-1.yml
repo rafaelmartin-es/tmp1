@@ -1,6 +1,16 @@
 ---
 name: Workflow Test
-on: workflow_call
+on:
+  workflow_call:
+    inputs:
+      ros_distro:
+        description: 'ROS distro'
+        required: true
+        type: string
+    secrets:
+      MY_SECRET:
+        description: 'Secret to expose to the job'
+        required: true
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -9,6 +19,7 @@ jobs:
       - run: echo "Hello World"
       - run: echo "The event name is ${{ github.event_name }}"
       - run: echo "Custom secret ${{ secrets.MY_SECRET }}"
+      - run: echo "Custom input ${{ inputs.ros_distro }}"
 
   test:
     needs: build
@@ -16,7 +27,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: echo "Hello World"
-      - run: echo "The event name is ${{ github.event_name }}"
 
   deploy:
     needs: test
@@ -24,4 +34,3 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: echo "Hello World"
-      - run: echo "The event name is ${{ github.event_name }}"

@@ -11,26 +11,23 @@ on:
       MY_SECRET:
         description: 'Secret to expose to the job'
         required: true
+      GAR_USER:
+        description: 'Google Artifact Registry user'
+        required: true
+      GAR_PASS:
+        description: 'Google Artifact Registry password'
+        required: true
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
+    container:
+      image: robotnik/robotnik_ros:${{ inputs.ros_distro }}-builder
+      credentials:
+        username: ${{ secrets.GAR_USER }}
+        password: ${{ secrets.GAR_PASS }}
+      options: --user root
     steps:
       - uses: actions/checkout@v3
-      - run: echo "Hello World"
-      - run: echo "The event name is ${{ github.event_name }}"
-      - run: echo "Custom secret ${{ secrets.MY_SECRET }}"
-      - run: echo "Custom input ${{ inputs.ros_distro }}"
-
-  test:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - run: echo "Hello World"
-
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - run: echo "Hello World"
+        with:
+          path: src/package
+      - run: find .

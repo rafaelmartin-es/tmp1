@@ -19,7 +19,7 @@ on:
         required: true
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     container:
       image: robotnik/robotnik-ros:${{ inputs.ros_distro }}-builder
       credentials:

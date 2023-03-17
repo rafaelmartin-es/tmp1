@@ -31,3 +31,5 @@ jobs:
         with:
           path: src/package
       - run: find .
+      - run: ls /opt
+      - run: find /opt

@@ -8,9 +8,6 @@ on:
         required: true
         type: string
     secrets:
-      MY_SECRET:
-        description: 'Secret to expose to the job'
-        required: true
       GAR_USER:
         description: 'Google Artifact Registry user'
         required: true
@@ -26,10 +23,34 @@ jobs:
         username: ${{ secrets.GAR_USER }}
         password: ${{ secrets.GAR_PASS }}
       options: --user root
+    defaults:
+      run:
+        shell: bash
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
         with:
           path: src/package
-      - run: find .
-      - run: ls /opt
-      - run: find /opt
+      - name: Update dependencies
+        run: |
+          apt-get update
+          local_deps.sh
+      - name: Download and install dependencies
+        run: |
+          rosdep install --from-paths src --ignore-src -r -y
+      - name: Build
+        run: |
+          source /opt/ros/${{ inputs.ros_distro }}/setup.bash
+          catkin config --install
+          catkin build
+      - name: Generate packages
+        run: |
+          source /opt/ros/${{ inputs.ros_distro }}/setup.bash
+          source ./install/local_setup.bash
+          generate_debs.sh
+      - name: Upload packages
+        uses: rafaelmartin-es/upload-artifact@v1
+        with:
+          name: packages
+          path: debs
+          retention-days: 1

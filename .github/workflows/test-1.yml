@@ -8,3 +8,19 @@ jobs:
       - uses: actions/checkout@v3
       - run: echo "Hello World"
       - run: echo "The event name is ${{ github.event_name }}"
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: echo "Hello World"
+      - run: echo "The event name is ${{ github.event_name }}"
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: echo "Hello World"
+      - run: echo "The event name is ${{ github.event_name }}"

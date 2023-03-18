@@ -1,0 +1,104 @@
+---
+name: Workflow to build and deploy packages
+on:
+  workflow_call:
+    inputs:
+      ros_distro:
+        description: 'ROS distro'
+        required: true
+        type: string
+      deb_distro:
+        description: 'Debian distro'
+        required: true
+        type: string
+    secrets:
+      GAR_USER:
+        description: 'Google Artifact Registry user'
+        required: true
+      GAR_PASS:
+        description: 'Google Artifact Registry password'
+        required: true
+      DEB_REPO:
+        description: 'Debian repository'
+        required: true
+      DEB_REPO_USER:
+        description: 'Debian repository user'
+        required: true
+      DEB_REPO_PASS:
+        description: 'Debian repository password'
+        required: true
+      DEB_REPO_SIGNING_KEY:
+        description: 'Debian repository signing key'
+        required: true
+jobs:
+  build:
+    name: Build packages
+    runs-on: ubuntu-latest
+    container:
+      image: theberbat/robotnik-ros:${{ inputs.ros_distro }}-builder
+      credentials:
+        username: ${{ secrets.GAR_USER }}
+        password: ${{ secrets.GAR_PASS }}
+      options: --user root
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.ros_distro }}
+      - name: Download source
+        run: |
+          vcs import --recursive . --input ./public/${{ inputs.ros_distro }}.yml
+      - name: Update dependencies
+        run: |
+          apt-get update
+          local_deps.sh
+      - name: Download and install dependencies
+        run: |
+          rosdep install --from-paths src --ignore-src -r -y
+      - name: Build
+        run: |
+          source /opt/ros/${{ inputs.ros_distro }}/setup.bash
+          catkin config --install
+          catkin build
+      - name: Generate packages
+        run: |
+          source /opt/ros/${{ inputs.ros_distro }}/setup.bash
+          source ./install/local_setup.bash
+          generate_debs.sh
+      - name: Upload packages
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages-${{ inputs.ros_distro }}-${{ inputs.deb_distro }}
+          path: debs
+          retention-days: 1
+  deploy:
+    name: Deploy packages to Debian repository
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-${{ inputs.ros_distro }}-${{ inputs.deb_distro }}
+          path: debs
+      - name: Upload packages
+        run: |
+          find ./debs/*.deb -exec curl \
+            -u"${{ secrets.DEB_REPO_USER }}:${{ secrets.DEB_REPO_PASS}}" \
+            -XPOST -F file=@{} \
+            ${{ secrets.DEB_REPO }}/api/files/${{ inputs.ros_distro }}-${{ github.sha }} \;
+      - name: Insert packages
+        run: |
+          curl \
+            -u"${{ secrets.DEB_REPO_USER }}:${{ secrets.DEB_REPO_PASS}}" \
+            -XPOST \
+            "${{ secrets.DEB_REPO }}/api/repos/public-${{ inputs.ros_distro }}/file/${{ inputs.ros_distro }}-${{ github.sha }}?forceReplace=1"
+      - name: Publish packages
+        run: |
+          curl \
+            -u"${{ secrets.DEB_REPO_USER }}:${{ secrets.DEB_REPO_PASS}}" \
+            -XPUT -H 'Content-Type: application/json' --data '{"ForceOverwrite": true, "Signing": {"Batch": true, "Passphrase": "${{ secrets.DEB_REPO_SIGNING_KEY }}"}}' \
+            "${{ secrets.DEB_REPO }}/api/publish/public/${{ inputs.deb_distro }}"

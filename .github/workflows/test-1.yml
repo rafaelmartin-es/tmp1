@@ -91,4 +91,4 @@ jobs:
           # Insert packages into Debian repository
           curl -u"${{ secrets.DEB_REPO_USER }}:${{ secrets.DEB_REPO_PASS}}" -XPOST "${{ secrets.DEB_REPO }}/api/repos/public-${{ inputs.ros_distro }}/file/${{ inputs.ros_distro }}-${{ github.sha }}"
           # Publish Debian repository
-          curl -u"${{ secrets.DEB_REPO_USER }}:${{ secrets.DEB_REPO_PASS}}" -XPUT -H 'Content-Type: application/json' --data '{"ForceOverwrite": true, "Signing": {"Batch": true, "Passphrase": "${{ secrets.DEB_REPO_SIGNING_KEY }}"}}' "${{ secrets.DEB_REPO }}/api/publish/public-${{ inputs.ros_distro }}/${UBUNTU_DISTRO}"
+          curl -u"${{ secrets.DEB_REPO_USER }}:${{ secrets.DEB_REPO_PASS}}" -XPUT -H 'Content-Type: application/json' --data '{"ForceOverwrite": true, "Signing": {"Batch": true, "Passphrase": "${{ secrets.DEB_REPO_SIGNING_KEY }}"}}' "${{ secrets.DEB_REPO }}/api/publish/public/${UBUNTU_DISTRO}"

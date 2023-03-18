@@ -76,4 +76,4 @@ jobs:
           path: debs
       - name: Deploy
         run: |
-          find ~/Downloads/debs/*.deb -exec curl -u"${{ secrets.DEB_REPO_USER }}:${{ secrets.DEB_REPO_PASS}}" -XPOST -F file=@{} ${{ secrets.DEB_REPO }}/api/files/${{ github.sha }} \;
+          find ./debs/*.deb -exec curl -u"${{ secrets.DEB_REPO_USER }}:${{ secrets.DEB_REPO_PASS}}" -XPOST -F file=@{} ${{ secrets.DEB_REPO }}/api/files/${{ github.sha }} \;

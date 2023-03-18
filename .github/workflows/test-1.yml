@@ -49,7 +49,7 @@ jobs:
           source ./install/local_setup.bash
           generate_debs.sh
       - name: Upload packages
-        uses: rafaelmartin-es/upload-artifact@v1
+        uses: actions/upload-artifact@v3
         with:
           name: packages
           path: debs

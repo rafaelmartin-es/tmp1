@@ -23,6 +23,9 @@ on:
       DEB_REPO_PASS:
         description: 'Debian repository password'
         required: true
+      DEB_REPO_SIGNING_KEY:
+        description: 'Debian repository signing key'
+        required: true
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -76,4 +79,16 @@ jobs:
           path: debs
       - name: Deploy
         run: |
-          find ./debs/*.deb -exec curl -u"${{ secrets.DEB_REPO_USER }}:${{ secrets.DEB_REPO_PASS}}" -XPOST -F file=@{} ${{ secrets.DEB_REPO }}/api/files/${{ github.sha }} \;
+          # Set Ubuntu distro
+          if [ "$ROS_DISTRO" = "melodic" ]; then
+            export UBUNTU_DISTRO="bionic"
+          elif [ "$ROS_DISTRO" = "noetic" ]; then
+            export UBUNTU_DISTRO="focal"
+          fi
+
+          # Upload packages to server
+          find ./debs/*.deb -exec curl -u"${{ secrets.DEB_REPO_USER }}:${{ secrets.DEB_REPO_PASS}}" -XPOST -F file=@{} ${{ secrets.DEB_REPO }}/api/files/${{ inputs.ros_distro }}-${{ github.sha }} \;
+          # Insert packages into Debian repository
+          curl -u"${{ secrets.DEB_REPO_USER }}:${{ secrets.DEB_REPO_PASS}}" -XPOST "${{ secrets.DEB_REPO }}/api/repos/public-${{ inputs.ros_distro }}/file/${{ inputs.ros_distro }}-${{ github.sha }}"
+          # Publish Debian repository
+          curl -u"${{ secrets.DEB_REPO_USER }}:${{ secrets.DEB_REPO_PASS}}" -XPUT -H 'Content-Type: application/json' --data '{"ForceOverwrite": true, "Signing": {"Batch": true, "Passphrase": "${{ secrets.DEB_REPO_SIGNING_KEY }}"}}' "${{ secrets.DEB_REPO }}/api/publish/public-${{ inputs.ros_distro }}/${UBUNTU_DISTRO}"

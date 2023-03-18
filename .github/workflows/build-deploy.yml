@@ -46,8 +46,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          ref: ${{ inputs.ros_distro }}
       - name: Download source
         run: |
           vcs import --recursive . --input ./public/${{ inputs.ros_distro }}.yml

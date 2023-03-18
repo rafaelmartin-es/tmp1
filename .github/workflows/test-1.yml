@@ -7,6 +7,10 @@ on:
         description: 'ROS distro'
         required: true
         type: string
+      deb_distro:
+        description: 'Debian distro'
+        required: true
+        type: string
     secrets:
       GAR_USER:
         description: 'Google Artifact Registry user'
@@ -64,7 +68,7 @@ jobs:
       - name: Upload packages
         uses: actions/upload-artifact@v3
         with:
-          name: packages-${{ inputs.ros_distro }}
+          name: packages-${{ inputs.ros_distro }}-${{ inputs.deb_distro }}
           path: debs
           retention-days: 1
   deploy:
@@ -75,32 +79,23 @@ jobs:
       - name: Download packages
         uses: actions/download-artifact@v3
         with:
-          name: packages-${{ inputs.ros_distro }}
+          name: packages-${{ inputs.ros_distro }}-${{ inputs.deb_distro }}
           path: debs
-      - name: Deploy
+      - name: Upload packages
         run: |
-          # Set Ubuntu distro
-          if [ "${{ inputs.ros_distro }}" = "melodic" ]; then
-            export UBUNTU_DISTRO="bionic"
-          elif [ "${{ inputs.ros_distro }}" = "noetic" ]; then
-            export UBUNTU_DISTRO="focal"
-          else
-            echo "Unknown ROS distro: ${{ inputs.ros_distro }}"
-            exit 1
-          fi
-
-          # Upload packages to server
           find ./debs/*.deb -exec curl \
             -u"${{ secrets.DEB_REPO_USER }}:${{ secrets.DEB_REPO_PASS}}" \
             -XPOST -F file=@{} \
             ${{ secrets.DEB_REPO }}/api/files/${{ inputs.ros_distro }}-${{ github.sha }} \;
-          # Insert packages into Debian repository
+      - name: Insert packages
+        run: |
           curl \
             -u"${{ secrets.DEB_REPO_USER }}:${{ secrets.DEB_REPO_PASS}}" \
             -XPOST \
             "${{ secrets.DEB_REPO }}/api/repos/public-${{ inputs.ros_distro }}/file/${{ inputs.ros_distro }}-${{ github.sha }}?forceReplace=1"
-          # Publish Debian repository
+      - name: Publish packages
+        run: |
           curl \
             -u"${{ secrets.DEB_REPO_USER }}:${{ secrets.DEB_REPO_PASS}}" \
             -XPUT -H 'Content-Type: application/json' --data '{"ForceOverwrite": true, "Signing": {"Batch": true, "Passphrase": "${{ secrets.DEB_REPO_SIGNING_KEY }}"}}' \
-            "${{ secrets.DEB_REPO }}/api/publish/public/${UBUNTU_DISTRO}"
+            "${{ secrets.DEB_REPO }}/api/publish/public/${{ inputs.deb_distro }}"

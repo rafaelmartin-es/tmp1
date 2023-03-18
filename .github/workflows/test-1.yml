@@ -80,9 +80,9 @@ jobs:
       - name: Deploy
         run: |
           # Set Ubuntu distro
-          if [ "$ROS_DISTRO" = "melodic" ]; then
+          if [ "${{ inputs.ros_distro }}" = "melodic" ]; then
             export UBUNTU_DISTRO="bionic"
-          elif [ "$ROS_DISTRO" = "noetic" ]; then
+          elif [ "${{ inputs.ros_distro }}" = "noetic" ]; then
             export UBUNTU_DISTRO="focal"
           fi
 

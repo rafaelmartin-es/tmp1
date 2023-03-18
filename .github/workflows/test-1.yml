@@ -90,8 +90,17 @@ jobs:
           fi
 
           # Upload packages to server
-          find ./debs/*.deb -exec curl -u"${{ secrets.DEB_REPO_USER }}:${{ secrets.DEB_REPO_PASS}}" -XPOST -F file=@{} ${{ secrets.DEB_REPO }}/api/files/${{ inputs.ros_distro }}-${{ github.sha }} \;
+          find ./debs/*.deb -exec curl \
+            -u"${{ secrets.DEB_REPO_USER }}:${{ secrets.DEB_REPO_PASS}}" \
+            -XPOST -F file=@{} \
+            ${{ secrets.DEB_REPO }}/api/files/${{ inputs.ros_distro }}-${{ github.sha }} \;
           # Insert packages into Debian repository
-          curl -u"${{ secrets.DEB_REPO_USER }}:${{ secrets.DEB_REPO_PASS}}" -XPOST "${{ secrets.DEB_REPO }}/api/repos/public-${{ inputs.ros_distro }}/file/${{ inputs.ros_distro }}-${{ github.sha }}"
+          curl \
+            -u"${{ secrets.DEB_REPO_USER }}:${{ secrets.DEB_REPO_PASS}}" \
+            -XPOST \
+            "${{ secrets.DEB_REPO }}/api/repos/public-${{ inputs.ros_distro }}/file/${{ inputs.ros_distro }}-${{ github.sha }}"
           # Publish Debian repository
-          curl -u"${{ secrets.DEB_REPO_USER }}:${{ secrets.DEB_REPO_PASS}}" -XPUT -H 'Content-Type: application/json' --data '{"ForceOverwrite": true, "Signing": {"Batch": true, "Passphrase": "${{ secrets.DEB_REPO_SIGNING_KEY }}"}}' "${{ secrets.DEB_REPO }}/api/publish/public/${UBUNTU_DISTRO}"
+          curl \
+            -u"${{ secrets.DEB_REPO_USER }}:${{ secrets.DEB_REPO_PASS}}" \
+            -XPUT -H 'Content-Type: application/json' --data '{"ForceOverwrite": true, "Signing": {"Batch": true, "Passphrase": "${{ secrets.DEB_REPO_SIGNING_KEY }}"}}' \
+            "${{ secrets.DEB_REPO }}/api/publish/public/${UBUNTU_DISTRO}"

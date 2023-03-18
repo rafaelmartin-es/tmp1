@@ -98,7 +98,7 @@ jobs:
           curl \
             -u"${{ secrets.DEB_REPO_USER }}:${{ secrets.DEB_REPO_PASS}}" \
             -XPOST \
-            "${{ secrets.DEB_REPO }}/api/repos/public-${{ inputs.ros_distro }}/file/${{ inputs.ros_distro }}-${{ github.sha }}"
+            "${{ secrets.DEB_REPO }}/api/repos/public-${{ inputs.ros_distro }}/file/${{ inputs.ros_distro }}-${{ github.sha }}?forceReplace=1"
           # Publish Debian repository
           curl \
             -u"${{ secrets.DEB_REPO_USER }}:${{ secrets.DEB_REPO_PASS}}" \

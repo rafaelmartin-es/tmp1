@@ -30,6 +30,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
+          ref: ${{ inputs.ros_distro }}
           path: src/package
       - name: Update dependencies
         run: |

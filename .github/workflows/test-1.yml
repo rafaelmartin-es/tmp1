@@ -32,6 +32,7 @@ on:
         required: true
 jobs:
   build:
+    name: Build packages
     runs-on: ubuntu-latest
     container:
       image: theberbat/robotnik-ros:${{ inputs.ros_distro }}-builder
@@ -72,7 +73,7 @@ jobs:
           path: debs
           retention-days: 1
   deploy:
-    name: Deploy packages
+    name: Deploy packages to Debian repository
     needs: build
     runs-on: ubuntu-latest
     steps:

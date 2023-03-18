@@ -84,6 +84,9 @@ jobs:
             export UBUNTU_DISTRO="bionic"
           elif [ "${{ inputs.ros_distro }}" = "noetic" ]; then
             export UBUNTU_DISTRO="focal"
+          else
+            echo "Unknown ROS distro: ${{ inputs.ros_distro }}"
+            exit 1
           fi
 
           # Upload packages to server
